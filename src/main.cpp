@@ -12,6 +12,7 @@
 // Timer variables
 unsigned long sendDataPrevMillis = 0;
 unsigned long timerDelay = 1000;
+unsigned long voltageDelay = 10;
 LED led1;
 LDR ldr1;
 void sendBurst();
@@ -58,7 +59,7 @@ void sendBurst()
     int counter = 0;
     while (counter < N)
     {
-        if (millis() - sendDataPrevMillis > timerDelay || sendDataPrevMillis == 0)
+        if (millis() - sendDataPrevMillis > voltageDelay || sendDataPrevMillis == 0)
         {
             sendDataPrevMillis = millis();
             voltage[counter] = ldr1.readLDR() / 1000.00;
