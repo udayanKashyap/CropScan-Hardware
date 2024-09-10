@@ -82,4 +82,26 @@ void setLDR(float value)
     }
 }
 
+void setLdrArray(float *arr, int n)
+{
+    String path = "/voltageArr";
+    String values = "";
+    for (int i = 0; i < n; i++)
+    {
+        String val = String(arr[i], 3);
+        val += ',';
+        values += val;
+    }
+    Serial.println(values);
+    if (Firebase.RTDB.pushString(&fbdo, path.c_str(), values.c_str()))
+    {
+        Serial.println("PASSED");
+    }
+    else
+    {
+        Serial.println("FAILED");
+        Serial.printf("REASON: %s\n", fbdo.errorReason());
+    }
+}
+
 #endif
