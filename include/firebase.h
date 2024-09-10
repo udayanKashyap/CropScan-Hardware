@@ -89,11 +89,11 @@ void setLdrArray(float *arr, int n)
     for (int i = 0; i < n; i++)
     {
         String val = String(arr[i], 3);
-        val += ' ';
+        val += ',';
         values += val;
     }
     Serial.println(values);
-    if (Firebase.RTDB.setString(&fbdo, path.c_str(), values.c_str()))
+    if (Firebase.RTDB.pushString(&fbdo, path.c_str(), values.c_str()))
     {
         Serial.println("PASSED");
     }

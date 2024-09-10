@@ -31,7 +31,7 @@ void loop()
 {
     int intensity = 0;
 
-    // Database requests
+    // Get Database requests
     if (millis() - sendDataPrevMillis > timerDelay || sendDataPrevMillis == 0)
     {
         sendDataPrevMillis = millis();
@@ -53,7 +53,7 @@ void loop()
 
 void sendBurst()
 {
-    int N = 20;
+    int N = 50;
     float voltage[N];
     int counter = 0;
     while (counter < N)
