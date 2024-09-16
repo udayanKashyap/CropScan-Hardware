@@ -10,20 +10,22 @@ class LED
 public:
     unsigned short int pin, resolution;
     unsigned int pwm_frequency;
+    int channel;
 
-    void initLED(int pin, int pwm_freq = DEFAULT_PWM_FREQ, int resolution = DEFAULT_PWM_RESOLUTION)
+    void initLED(int pin, int channel, int pwm_freq = DEFAULT_PWM_FREQ, int resolution = DEFAULT_PWM_RESOLUTION)
     {
         LED::pin = pin;
         pwm_frequency = pwm_freq;
         LED::resolution = resolution;
+        LED::channel = channel;
 
-        ledcAttachPin(pin, 1);
-        ledcSetup(1, pwm_freq, resolution);
+        ledcAttachPin(pin, channel);
+        ledcSetup(channel, pwm_freq, resolution);
     }
 
     void setLED(int dutyCycle)
     {
-        ledcWrite(1, dutyCycle);
+        ledcWrite(channel, dutyCycle);
     }
 };
 

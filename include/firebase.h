@@ -104,4 +104,19 @@ void setLdrArray(float *arr, int n)
     }
 }
 
+String getRGB(String path)
+{
+    String value;
+    if (Firebase.RTDB.getString(&fbdo, path.c_str(), &value))
+    {
+        return value;
+    }
+    else
+    {
+        Serial.println("FAILED");
+        Serial.printf("REASON: %s\n", fbdo.errorReason());
+        return "/0";
+    }
+}
+
 #endif
