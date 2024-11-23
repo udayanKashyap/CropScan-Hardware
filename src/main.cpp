@@ -7,12 +7,12 @@
 #include "led.h"
 #include "ldr.h"
 
-#define BUTTON1 21
+#define BUTTON1 0
 
 // Timer variables
 unsigned long sendDataPrevMillis = 0;
 unsigned long timerDelay = 1000;
-unsigned long voltageDelay = 10;
+unsigned long voltageDelay = 50;
 LED ledR, ledG, ledB;
 LDR ldr1;
 void sendBurst();
@@ -80,6 +80,7 @@ void loop()
     }
     if (digitalRead(BUTTON1) == LOW)
     {
+
         Serial.println("Sending voltage data...");
         sendDataPrevMillis = 0;
         sendBurst();

@@ -44,7 +44,6 @@ void initFirebase()
     while ((auth.token.uid) == "")
     {
         Serial.print('.');
-        delay(1000);
     }
     // Print user UID
     uid = auth.token.uid.c_str();
@@ -82,13 +81,13 @@ void setLDR(float value)
     }
 }
 
-void setLdrArray(float *arr, int n)
+void setLdrArray(float *voltageArr, int n)
 {
     String path = "/voltageArr";
     String values = "";
     for (int i = 0; i < n; i++)
     {
-        String val = String(arr[i], 3);
+        String val = String(voltageArr[i], 3);
         val += ',';
         values += val;
     }
