@@ -15,6 +15,7 @@ FirebaseData fbdo;
 FirebaseAuth auth;
 FirebaseConfig config;
 
+// Initialize the firebase object and make the connection
 void initFirebase()
 {
     // Assign the api key (required)
@@ -51,6 +52,7 @@ void initFirebase()
     Serial.println(uid);
 }
 
+// Get the integer intensity value at the path
 int getIntensity(String path)
 {
     int value;
@@ -66,6 +68,7 @@ int getIntensity(String path)
     }
 }
 
+// Set the voltage reading to the LDR path
 void setLDR(float value)
 {
     String path = "/voltage";
@@ -81,6 +84,7 @@ void setLDR(float value)
     }
 }
 
+// Push the voltage array of size n to the database
 void setLdrArray(float *voltageArr, int n)
 {
     String path = "/voltageArr";
@@ -103,6 +107,7 @@ void setLdrArray(float *voltageArr, int n)
     }
 }
 
+// Push the complete data array of size n to the database
 void uploadDataArr(float *voltageArr, int n, int Rvalue, int Gvalue, int Bvalue, int UVvalue, String ppm)
 {
     String path = "/voltageArr";
@@ -136,6 +141,7 @@ void uploadDataArr(float *voltageArr, int n, int Rvalue, int Gvalue, int Bvalue,
     }
 }
 
+// Get the string of intensities of R,G,B in the database
 String getRGB(String path)
 {
     String value;
@@ -151,6 +157,7 @@ String getRGB(String path)
     }
 }
 
+// Get the ppm (details) from the database
 String getPPM(String path)
 {
     String value;
@@ -163,6 +170,38 @@ String getPPM(String path)
         Serial.println("FAILED");
         Serial.printf("REASON: %s\n", fbdo.errorReason());
         return "/0";
+    }
+}
+
+// Get the starter flag from the database
+bool getStarter(){
+    String path = "/flag";
+    bool analysis_start = false;
+    if (Firebase.RTDB.getBool(&fbdo, path.c_str(), &analysis_start))
+    {
+        return analysis_start;
+    }
+    else
+    {
+        Serial.println("FAILED AT getStarter");
+        Serial.printf("REASON: %s\n", fbdo.errorReason());
+        return false;
+    }
+}
+
+// reset the starter flag to false in the database
+bool resetStarter(){
+    String path = "/flag";
+    bool analysis_start = false;
+    if (Firebase.RTDB.setBool(&fbdo, path, analysis_start))
+    {
+        Serial.println("/nSUCCESSFULLY RESET STARTER");
+        return true;    
+    }
+    else
+    {
+        Serial.println("FAILED AT putStarter");
+        return false;
     }
 }
 

@@ -1,7 +1,5 @@
 #include <Arduino.h>
 
-// #define FIREBASEJSON_USE_FS
-
 #include "wifi.h"
 #include "firebase.h"
 #include "led.h"
@@ -20,9 +18,12 @@
 unsigned long sendDataPrevMillis = 0;
 unsigned long timerDelay = 1000;
 unsigned long voltageDelay = 50;
-LED ledR, ledG, ledB, ledUV;
+bool global_starter=true;
+
+
+LED ledR, ledG, ledB, ledUV, ledBuiltin;
 LDR ldr1;
-void sendBurst();
+void sendBurst(String);
 
 // Global state maintained
 int Rintensity = 0, Gintensity = 0, Bintensity = 0, UVintensity = 0, rgb = 0;
@@ -34,77 +35,88 @@ void setup()
     initWiFi();
     initFirebase();
 
+    ledBuiltin.initLED(LED_BUILTIN, 4);
+
     ledR.initLED(RED_PIN, 0);
     ledG.initLED(GREEN_PIN, 1);
     ledB.initLED(BLUE_PIN, 2);
     ledUV.initLED(UV_PIN, 3);
     ldr1.initLDR(LDR_PIN);
+    int timerStart = millis();
+    while(millis() - timerStart < 2000);
 }
 
-void loop()
-{
-    // Get Database requests
-    if (millis() - sendDataPrevMillis > timerDelay || sendDataPrevMillis == 0)
-    {
+void loop(){
+    // Reset the leds
+    ledBuiltin.setLED(100);
+    ledR.setLED(0);
+    ledG.setLED(0);
+    ledB.setLED(0);
+    ledUV.setLED(0);
+
+    // Get Database Reqs
+    if(millis() - sendDataPrevMillis > timerDelay || sendDataPrevMillis == 0)
+    {   
+        ledBuiltin.setLED(255);
+
+        // reset the last_data_sent timer
         sendDataPrevMillis = millis();
-        int firebaseready = Firebase.ready();
-        if (firebaseready)
-        {
-            String rgb = getRGB("/intensity");
-            Serial.println(rgb);
-
-            int n = rgb.length();
-            int colourCount = 0;
-            String R(""), G(""), B(""), UV("");
-            for (int i = 0; i < n; i++)
-            {
-                if (rgb[i] == ',')
-                {
-                    colourCount++;
-                    continue;
+        int is_firebase_ready = Firebase.ready();
+        if(is_firebase_ready)
+        {   
+            // get the starter flag
+            bool analysis_start = getStarter();
+            if(analysis_start && global_starter)
+            {    
+                ledBuiltin.setLED(255);
+                {// RED DATA
+                    Rintensity=255;
+                    ledR.setLED(Rintensity);
+                    Serial.println("Sending Red Data...");
+                    sendBurst("R");
+                    Rintensity=0;
+                    ledR.setLED(0);
                 }
-                if (colourCount == 0)
-                {
-                    R += rgb[i];
+                {// GREEN DATA
+                    Gintensity=255;
+                    ledG.setLED(Gintensity);
+                    Serial.println("Sending Green Data...");
+                    sendBurst("G");
+                    Gintensity=0;
+                    ledG.setLED(0);
                 }
-                if (colourCount == 1)
-                {
-                    G += rgb[i];
+                {// BLUE DATA
+                    Bintensity=255;
+                    ledB.setLED(Bintensity);
+                    Serial.println("Sending Blue Data...");
+                    sendBurst("B");
+                    Bintensity=0;
+                    ledB.setLED(0);
                 }
-                if (colourCount == 2)
-                {
-                    B += rgb[i];
+                {// UV DATA
+                    UVintensity=255;
+                    ledUV.setLED(UVintensity);
+                    Serial.println("Sending UV Data...");
+                    sendBurst("UV");
+                    UVintensity=0;
+                    ledUV.setLED(0);
                 }
-                if (colourCount == 3)
+                // Set the starter flag to false
+                bool successful_transaction = resetStarter();
+                if (!successful_transaction)
                 {
-                    UV += rgb[i];
-                }
+                    Serial.println("FAILED TRANSACTION");
+                    global_starter=false;
+                }     
             }
-            Rintensity = (R.toInt() / 100.00) * 255;
-            Gintensity = (G.toInt() / 100.00) * 255;
-            Bintensity = (B.toInt() / 100.00) * 255;
-            UVintensity = (UV.toInt() / 100.00) * 255;
         }
-        ledR.setLED((Rintensity));
-        ledG.setLED((Gintensity));
-        ledB.setLED((Bintensity));
-        ledUV.setLED((UVintensity));
-
-        Serial.printf("Timestamp: %d Intensity: %d_%d_%d_%d\n", sendDataPrevMillis / 1000, Rintensity, Gintensity, Bintensity, UVintensity);
-    }
-    if (digitalRead(BUTTON1) == LOW)
-    {
-
-        Serial.println("Sending voltage data...");
-        sendDataPrevMillis = 0;
-        sendBurst();
-        Serial.println("Voltage Data Sent");
     }
 }
 
-void sendBurst()
+
+void sendBurst(String color)
 {
-    int N = 50;
+    int N = 10;
     float voltage[N];
     int counter = 0;
     while (counter < N)
@@ -119,8 +131,9 @@ void sendBurst()
     }
     if (Firebase.ready())
     {
-        String ppm = getPPM("/ppm");
-        Serial.printf("ppm: %s+\n", ppm);
+        // String ppm = getPPM("/ppm");
+        // Serial.printf("ppm: %s+\n", ppm);
+        String ppm = color;
         uploadDataArr(voltage, N, Rintensity, Gintensity, Bintensity, UVintensity, ppm);
     }
 }
