@@ -103,7 +103,55 @@ void setLdrArray(float *voltageArr, int n)
     }
 }
 
+void uploadDataArr(float *voltageArr, int n, int Rvalue, int Gvalue, int Bvalue, int UVvalue, String ppm)
+{
+    String path = "/voltageArr";
+    String values = "";
+    for (int i = 0; i < n; i++)
+    {
+        String val = String(voltageArr[i], 3);
+        val += ',';
+        values += val;
+    }
+    values += ":";
+    values += String(Rvalue);
+    values += ":";
+    values += String(Gvalue);
+    values += ":";
+    values += String(Bvalue);
+    values += ":";
+    values += String(UVvalue);
+    values += ":";
+    values += String(ppm);
+
+    Serial.println(values);
+    if (Firebase.RTDB.pushString(&fbdo, path.c_str(), values.c_str()))
+    {
+        Serial.println("PASSED");
+    }
+    else
+    {
+        Serial.println("FAILED");
+        Serial.printf("REASON: %s\n", fbdo.errorReason());
+    }
+}
+
 String getRGB(String path)
+{
+    String value;
+    if (Firebase.RTDB.getString(&fbdo, path.c_str(), &value))
+    {
+        return value;
+    }
+    else
+    {
+        Serial.println("FAILED");
+        Serial.printf("REASON: %s\n", fbdo.errorReason());
+        return "/0";
+    }
+}
+
+String getPPM(String path)
 {
     String value;
     if (Firebase.RTDB.getString(&fbdo, path.c_str(), &value))

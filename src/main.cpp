@@ -9,13 +9,23 @@
 
 #define BUTTON1 0
 
+#define RED_PIN 17
+#define GREEN_PIN 16
+#define BLUE_PIN 18
+#define UV_PIN 19
+
+#define LDR_PIN 35
+
 // Timer variables
 unsigned long sendDataPrevMillis = 0;
 unsigned long timerDelay = 1000;
 unsigned long voltageDelay = 50;
-LED ledR, ledG, ledB;
+LED ledR, ledG, ledB, ledUV;
 LDR ldr1;
 void sendBurst();
+
+// Global state maintained
+int Rintensity = 0, Gintensity = 0, Bintensity = 0, UVintensity = 0, rgb = 0;
 
 void setup()
 {
@@ -24,17 +34,15 @@ void setup()
     initWiFi();
     initFirebase();
 
-    ledR.initLED(17, 0);
-    ledG.initLED(16, 1);
-    ledB.initLED(18, 2);
-    ldr1.initLDR(35);
+    ledR.initLED(RED_PIN, 0);
+    ledG.initLED(GREEN_PIN, 1);
+    ledB.initLED(BLUE_PIN, 2);
+    ledUV.initLED(UV_PIN, 3);
+    ldr1.initLDR(LDR_PIN);
 }
 
 void loop()
 {
-    int Rintensity = 0, Gintensity = 0, Bintensity = 0, rgb = 0;
-    ;
-
     // Get Database requests
     if (millis() - sendDataPrevMillis > timerDelay || sendDataPrevMillis == 0)
     {
@@ -47,7 +55,7 @@ void loop()
 
             int n = rgb.length();
             int colourCount = 0;
-            String R(""), G(""), B("");
+            String R(""), G(""), B(""), UV("");
             for (int i = 0; i < n; i++)
             {
                 if (rgb[i] == ',')
@@ -67,16 +75,22 @@ void loop()
                 {
                     B += rgb[i];
                 }
+                if (colourCount == 3)
+                {
+                    UV += rgb[i];
+                }
             }
             Rintensity = (R.toInt() / 100.00) * 255;
             Gintensity = (G.toInt() / 100.00) * 255;
             Bintensity = (B.toInt() / 100.00) * 255;
+            UVintensity = (UV.toInt() / 100.00) * 255;
         }
         ledR.setLED((Rintensity));
         ledG.setLED((Gintensity));
         ledB.setLED((Bintensity));
+        ledUV.setLED((UVintensity));
 
-        Serial.printf("Timestamp: %d Intensity: %d_%d_%d\n", sendDataPrevMillis / 1000, Rintensity, Gintensity, Bintensity);
+        Serial.printf("Timestamp: %d Intensity: %d_%d_%d_%d\n", sendDataPrevMillis / 1000, Rintensity, Gintensity, Bintensity, UVintensity);
     }
     if (digitalRead(BUTTON1) == LOW)
     {
@@ -105,6 +119,8 @@ void sendBurst()
     }
     if (Firebase.ready())
     {
-        setLdrArray(voltage, N);
+        String ppm = getPPM("/ppm");
+        Serial.printf("ppm: %s+\n", ppm);
+        uploadDataArr(voltage, N, Rintensity, Gintensity, Bintensity, UVintensity, ppm);
     }
 }
